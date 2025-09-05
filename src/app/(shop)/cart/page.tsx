@@ -1,13 +1,16 @@
 import { Title } from '@/components';
 import Link from 'next/link';
 import { IoArrowForwardOutline } from 'react-icons/io5';
+import { CartRedirectHandler } from './ui/CartRedirectHandler';
+import { CheckoutButton } from './ui/CheckoutButton';
+import { CustomerInfo } from './ui/CustomerInfo';
 import { OrderSummary } from './ui/OrderSummary';
 import { ProductsInCart } from './ui/ProductsInCart';
 
-export default function () {
-  // redirect('/empty');
-
+export default function CartPage() {
   return (
+    <>
+      <CartRedirectHandler />
     <div className='flex  justify-center items-center mb-72 px-10 sm:px-0'>
       <div className='flex flex-col w-[1000px]'>
         <Title title='Cart' subtitle='Your cart items' />
@@ -23,23 +26,20 @@ export default function () {
             <ProductsInCart />
           </div>
 
-          {/*  Checkout */}
+          {/* Checkout */}
           <div className='right-2 bg-white rounded-xl shadow-xl p-7 h-fit'>
+            <CustomerInfo />
+            
             <h2 className='text-2xl mb-2'>Order Summary</h2>
-
             <OrderSummary />
 
             <div className='mt-5 mb-2 w-full'>
-              <Link
-                href='/checkout/address'
-                className='flex justify-center btn-primary '
-              >
-                Checkout
-              </Link>
+              <CheckoutButton />
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,10 +1,9 @@
 .swiper-slide {
-  
-    /* Center slide text vertically */
-    display: flex;
-  }
-  
-  /* Estilos para el swiper principal (imágenes grandes) */
+  /* Center slide text vertically */
+  display: flex;
+}
+
+/* Estilos para el swiper principal (imágenes grandes) */
 .mySwiper2 .swiper-slide img {
   display: block;
   width: 100%;

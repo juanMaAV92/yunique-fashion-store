@@ -11,17 +11,17 @@ export const getProductBySlug = async (slug: string) => {
             url: true,
           },
         },
-      },	
+      },
       where: { slug },
     });
 
-		if (!product) return null;
+    if (!product) return null;
 
-		const { productImages, ...rest } = product;
-		return {
-			...rest,
-			images: product.productImages.map(image => image.url),
-		};
+    const { productImages, ...rest } = product;
+    return {
+      ...rest,
+      images: product.productImages.map(image => image.url),
+    };
   } catch (error) {
     throw new Error('Failed to get product by slug');
   }

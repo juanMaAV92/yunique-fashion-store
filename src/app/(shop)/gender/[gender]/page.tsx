@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default async function ({ params, searchParams }: Props) {
-  const { gender } = params;
+  const { gender } = await params;
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
 
   const { products, totalPages, currentPage } =

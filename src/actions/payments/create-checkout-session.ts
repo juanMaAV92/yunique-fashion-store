@@ -47,7 +47,7 @@ export const createCheckoutSession = async (params: CreateCheckoutSessionParams)
       },
       body: JSON.stringify(requestBody),
     });
-
+    
     if (!response.ok) {
         const errorData: YunoErrorResponse = await response.json();
         throw new Error(`Yuno API Error: ${errorData.messages?.[0] || response.statusText}`);
@@ -55,6 +55,10 @@ export const createCheckoutSession = async (params: CreateCheckoutSessionParams)
    
 
     const checkoutSession: YunoCheckoutSessionResponse = await response.json();
+
+    console.log('Checkout session response status:', response.status);
+    console.log('Checkout session x-trace-id:', response.headers.get('x-trace-id'));
+    console.log('Checkout session id:', checkoutSession.checkout_session);
 
     return {
       success: true,

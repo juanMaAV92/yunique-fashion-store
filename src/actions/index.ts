@@ -4,5 +4,7 @@ export * from './product/product-pagination';
 
 // Payment actions
 export * from './payments/create-checkout-session';
+export * from './payments/create-payment';
 export * from './payments/create-yuno-customer';
+export * from './payments/get-yuno-config';
 

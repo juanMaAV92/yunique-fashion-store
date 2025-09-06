@@ -1,18 +1,24 @@
 'use client';
 
-import { createCheckoutSession, createYunoCustomer } from '@/actions';
+import { createCheckoutSession, createYunoCustomer, getYunoConfig } from '@/actions';
 import { useCartStore, useCustomerStore } from '@/store';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useShallow } from 'zustand/react/shallow';
+import { YunoPaymentModal } from './YunoPaymentModal';
 
 export const CheckoutButton = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { customer, setYunoCustomerId } = useCustomerStore(
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [checkoutSession, setCheckoutSession] = useState<string>('');
+  const [merchantOrderId, setMerchantOrderId] = useState<string>('');
+  
+  const { customer, yunoCustomerId, setYunoCustomerId } = useCustomerStore(
     useShallow(state => ({
       customer: state.customer,
+      yunoCustomerId: state.yunoCustomerId,
       setYunoCustomerId: state.setYunoCustomerId
     }))
   );
@@ -63,11 +69,12 @@ export const CheckoutButton = () => {
       setYunoCustomerId(customerResult.data.id);
 
       // Generate a unique order ID
-      const merchantOrderId = `order_${uuidv4()}`;
+      const newMerchantOrderId = `order_${uuidv4()}`;
+      setMerchantOrderId(newMerchantOrderId);
       
       console.log('Creating checkout session with data:', {
         customerId: customerResult.data.id,
-        merchantOrderId,
+        merchantOrderId: newMerchantOrderId,
         amount: cartSummary.total,
         currency: 'USD' 
       });
@@ -75,8 +82,8 @@ export const CheckoutButton = () => {
       // Create checkout session in Yuno
       const sessionResult = await createCheckoutSession({
         customerId: customerResult.data.id,
-        merchantOrderId,
-        paymentDescription: `Order ${merchantOrderId}`,
+        merchantOrderId: newMerchantOrderId,
+        paymentDescription: `Order ${newMerchantOrderId}`,
         amount: {
           currency: 'USD',
           value: cartSummary.total
@@ -89,12 +96,15 @@ export const CheckoutButton = () => {
       }
 
       console.log('Checkout session created successfully:', sessionResult.data);
-
+      const yunoConfig = await getYunoConfig();
+      // Store session data
       sessionStorage.setItem('checkoutSession', sessionResult.data.checkout_session);
-      sessionStorage.setItem('merchantOrderId', merchantOrderId);
+      sessionStorage.setItem('merchantOrderId', newMerchantOrderId);
+      sessionStorage.setItem('publicApiKey', yunoConfig.data?.apiKey || '');
       
-      // Redirect to checkout page with session created
-      router.push('/checkout');
+      // Set checkout session and open modal
+      setCheckoutSession(sessionResult.data.checkout_session);
+      setIsModalOpen(true);
       
     } catch (error) {
       console.error('Error during checkout:', error);
@@ -104,22 +114,61 @@ export const CheckoutButton = () => {
     }
   };
 
+  const handlePaymentSuccess = (paymentResult: any) => {
+    const paymentData = paymentResult.success ? paymentResult.data : paymentResult;
+    
+    console.log('Payment ID:', paymentData?.id);
+    localStorage.setItem('paymentData', JSON.stringify(paymentData));
+    
+    if (paymentData?.id) {
+      router.push(`/orders/${paymentData.id}`);
+    } else {
+      console.error('Payment ID not found. Full data:', paymentData);
+      notFound();
+    }
+  };
+
+  const handlePaymentError = (error: any) => {
+    console.error('Payment failed:', error);
+    alert('Payment failed. Please try again.');
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setCheckoutSession('');
+  };
+
   return (
-    <button
-      onClick={handleCheckout}
-      disabled={isLoading}
-      className={`w-full flex justify-center btn-primary ${
-        isLoading ? 'opacity-50 cursor-not-allowed' : ''
-      }`}
-    >
-      {isLoading ? (
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          Processing...
-        </div>
-      ) : (
-        'Checkout'
-      )}
-    </button>
+    <>
+      <button
+        onClick={handleCheckout}
+        disabled={isLoading}
+        className={`w-full flex justify-center btn-primary ${
+          isLoading ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Processing...
+          </div>
+        ) : (
+          'Checkout'
+        )}
+      </button>
+
+      <YunoPaymentModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        checkoutSession={checkoutSession}
+        paymentAmount={cartSummary.total}
+        paymentCurrency='USD'
+        customerPayerId={yunoCustomerId || ''}
+        merchantOrderId={merchantOrderId || ''}
+        country={customer?.country || ''}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentError={handlePaymentError}
+      />
+    </>
   );
 };

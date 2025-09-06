@@ -32,3 +32,26 @@ export interface YunoErrorResponse {
   code: string;
   messages: string[];
 }
+
+export interface YunoPaymentResponse {
+  id: string;
+  merchant_order_id: string;
+  status: string;
+  status_detail: string;
+  amount: {
+    currency: string;
+    value: number;
+  };
+  created_at: string;
+  updated_at: string;
+  payment_method: {
+    type: string;
+    vaulted_token?: string;
+  };
+  customer_payer: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string;
+  };
+}

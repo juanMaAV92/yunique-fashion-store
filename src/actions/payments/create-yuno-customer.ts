@@ -58,6 +58,7 @@ export const createYunoCustomer = async ({
       },
       body: JSON.stringify(requestBody),
     });
+    
 
     if (!response.ok) {
       const errorData: YunoErrorResponse = await response.json();
@@ -65,6 +66,11 @@ export const createYunoCustomer = async ({
     }
 
     const customer: YunoCustomerResponse = await response.json();
+
+    console.log('Create customer response status:', response.status);
+    console.log('Create customer x-trace-id:', response.headers.get('x-trace-id'));
+    console.log('Create customer id:', customer.id);
+    
 
     return {
       success: true,
